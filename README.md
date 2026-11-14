@@ -1,8 +1,10 @@
 # RotaClima — rotação de culturas orientada por dados da NASA (versão visual)
 
-> Versão com layout colorido e ilustrado. A versão original continua em
-> [monica1602/RotaClima](https://github.com/monica1602/RotaClima) — <https://rotaclima.streamlit.app/>.
->
+## ▶ Acesse o app: [https://climafazenda-mut8m94jdyo8nshsw4sp4f.streamlit.app/](https://climafazenda-mut8m94jdyo8nshsw4sp4f.streamlit.app/)
+
+Abre em qualquer computador ou celular, sem login e sem instalar nada. No celular, toque em **>** no canto
+superior esquerdo para abrir o menu das 7 telas.
+
 > Cada tela tem paleta e ilustração próprias, ligadas ao tema (definidas em `rotaclima/theme.py`, imagens em `assets/`):
 >
 > | Tela | Cores | Tema |
@@ -38,8 +40,8 @@ O app abre em `http://localhost:8501`. As cinco propriedades demonstrativas já 
 ### Link público (Streamlit Community Cloud, gratuito)
 
 1. Acesse [share.streamlit.io](https://share.streamlit.io) e entre com a conta do GitHub.
-2. **Create app** → repositório `monica1602/RotaClima`, branch `main`, arquivo principal `app.py` → **Deploy**.
-3. O endereço gerado (ex.: `https://rotaclima.streamlit.app`) abre em qualquer computador ou celular, sem login.
+2. **Create app** → repositório `monica1602/ClimaFazenda`, branch `main`, arquivo principal `app.py` → **Deploy**.
+3. O endereço gerado (atual: <https://climafazenda-mut8m94jdyo8nshsw4sp4f.streamlit.app/>) abre em qualquer computador ou celular, sem login.
 
 Testes:
 
