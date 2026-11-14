@@ -1,4 +1,19 @@
-# RotaClima — rotação de culturas orientada por dados da NASA
+# RotaClima — rotação de culturas orientada por dados da NASA (versão visual)
+
+> Versão com layout colorido e ilustrado. A versão original continua em
+> [monica1602/RotaClima](https://github.com/monica1602/RotaClima) — <https://rotaclima.streamlit.app/>.
+>
+> Cada tela tem paleta e ilustração próprias, ligadas ao tema (definidas em `rotaclima/theme.py`, imagens em `assets/`):
+>
+> | Tela | Cores | Tema |
+> |---|---|---|
+> | 1. Propriedade | marrom-terra e verde | solo e lavoura |
+> | 2. Diagnóstico ambiental | azul e amarelo | água, chuva e sol |
+> | 3. Mapa dos talhões | verde-azulado e verde-claro | satélite e vegetação (NDVI) |
+> | 4. Planejamento de rotação | verde e dourado | cultivo e sucessão de culturas |
+> | 5. Comparação de cenários | roxo e verde-água | decisão e equilíbrio entre prioridades |
+> | 6. Simulador climático | laranja e vermelho | calor e seca |
+> | 7. Relatório | azul NASA e vermelho | síntese e documentação |
 
 Protótipo para o desafio **NASA Space Apps Challenge 2026 — "Mudança no Campo: Adaptando Fazendas com Dados da NASA"**.
 

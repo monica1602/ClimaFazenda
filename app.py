@@ -14,7 +14,7 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from rotaclima import diagnostics, engine, modis, nasa_power, presets, recommender
+from rotaclima import diagnostics, engine, modis, nasa_power, presets, recommender, theme
 from rotaclima.crops import AWC_MM_PER_M, CROPS, SECOND, SUMMER, TEXTURES, crops_table
 from rotaclima.engine import Scenario
 from rotaclima.recommender import CRITERIA, PRESETS as WEIGHT_PRESETS, SLOT_LABELS, Economics, Talhao
@@ -22,7 +22,6 @@ from rotaclima.recommender import CRITERIA, PRESETS as WEIGHT_PRESETS, SLOT_LABE
 st.set_page_config(page_title="RotaClima — rotação de culturas com dados da NASA", layout="wide",
                    initial_sidebar_state="expanded")
 
-PALETTE = px.colors.qualitative.Safe
 NAME_TO_KEY = {c.nome: k for k, c in CROPS.items()}
 SUMMER_NAMES = [CROPS[k].nome for k in SUMMER]
 SECOND_NAMES = [CROPS[k].nome for k in SECOND]
@@ -243,10 +242,26 @@ def color_scale(values: dict[str, float], scale: str = "RdYlGn", reverse: bool =
 
 # ----------------------------------------------------------------------------- barra lateral
 
+PALETTE = list(theme.THEMES[ss.page].paleta)
+st.markdown(theme.css(ss.page), unsafe_allow_html=True)
+
+
+def hero(title: str, text: str | None = None) -> None:
+    t = theme.THEMES[ss.page]
+    with st.container(key="hero"):
+        c1, c2 = st.columns([2.4, 1], vertical_alignment="center")
+        with c1:
+            st.markdown(f'<span class="rc-chip">{t.icone} {esc(t.resumo)}</span>', unsafe_allow_html=True)
+            st.title(title)
+            if text:
+                st.markdown(text)
+        c2.markdown(theme.hero_image(ss.page), unsafe_allow_html=True)
+
+
 with st.sidebar:
-    st.markdown("## RotaClima")
+    st.markdown(theme.brand_html(), unsafe_allow_html=True)
     st.caption("Rotação de culturas orientada por dados da NASA")
-    st.radio("Navegação", PAGES, key="page", label_visibility="collapsed")
+    st.radio("Navegação", PAGES, key="page", label_visibility="collapsed", format_func=theme.nav_label)
     st.divider()
     st.markdown(f"**{ss.prop_nome}**")
     st.caption(f"{len(ss.talhoes)} talhões · {ss.talhoes['area_ha'].sum():.0f} ha · "
@@ -261,9 +276,9 @@ with st.sidebar:
 # ----------------------------------------------------------------------------- 1. propriedade
 
 def page_propriedade() -> None:
-    st.title("1. Cadastro da propriedade")
-    st.write("Informe a localização e os talhões. Os dados climáticos são obtidos automaticamente da "
-             "**NASA POWER** para o ponto da propriedade; os dados de solo vêm do produtor (análise de solo).")
+    hero("1. Cadastro da propriedade",
+         "Informe a localização e os talhões. Os dados climáticos são obtidos automaticamente da "
+         "**NASA POWER** para o ponto da propriedade; os dados de solo vêm do produtor (análise de solo).")
     c1, c2 = st.columns([1.2, 1])
     with c1:
         names = list(presets.PRESETS)
@@ -384,7 +399,8 @@ def import_geojson(gj: dict) -> None:
 # ----------------------------------------------------------------------------- 2. diagnóstico
 
 def page_diagnostico() -> None:
-    st.title("2. Diagnóstico ambiental")
+    hero("2. Diagnóstico ambiental", "Como a água e o calor se comportaram nos últimos 25 anos no ponto da "
+         "propriedade, com dados diários da **NASA POWER**.")
     df = climate_adjusted()
     if df is None:
         return
@@ -394,13 +410,13 @@ def page_diagnostico() -> None:
     spells = diagnostics.wet_season_dry_spells(df, ss.lat)
 
     k = st.columns(6)
-    k[0].metric("Chuva anual média", f"{annual['chuva'].mean():.0f} mm")
-    k[1].metric("ET0 anual (FAO-56)", f"{annual['et0'].mean():.0f} mm", help="Evapotranspiração de referência "
+    k[0].metric("🌧️ Chuva anual média", f"{annual['chuva'].mean():.0f} mm")
+    k[1].metric("💨 ET0 anual (FAO-56)", f"{annual['et0'].mean():.0f} mm", help="Evapotranspiração de referência "
                 "calculada por Penman-Monteith com temperatura, umidade, radiação e vento da NASA POWER.")
-    k[2].metric("Balanço chuva − ET0", f"{annual['balanco'].mean():+.0f} mm")
-    k[3].metric("Temperatura média", f"{annual['temp_media'].mean():.1f} °C")
-    k[4].metric("Dias/ano > 35 °C", f"{annual['dias_calor'].mean():.0f}")
-    k[5].metric("Maior veranico (dez–fev)", f"{spells.mean():.0f} dias", help="Média do maior período "
+    k[2].metric("⚖️ Balanço chuva − ET0", f"{annual['balanco'].mean():+.0f} mm")
+    k[3].metric("🌡️ Temperatura média", f"{annual['temp_media'].mean():.1f} °C")
+    k[4].metric("🔥 Dias/ano > 35 °C", f"{annual['dias_calor'].mean():.0f}")
+    k[5].metric("☀️ Maior veranico (dez–fev)", f"{spells.mean():.0f} dias", help="Média do maior período "
                 "consecutivo com chuva < 1 mm entre dezembro e fevereiro. Dados em grade (≈ 55 km) "
                 "suavizam a chuva e tendem a subestimar veranicos locais; confira com pluviômetro.")
 
@@ -483,9 +499,9 @@ def soil_vulnerability(row: pd.Series, ndvi_mean: float | None) -> tuple[int, st
 
 
 def page_mapa() -> None:
-    st.title("3. Mapa dos talhões")
-    st.write("Visualização dos talhões com indicadores de solo (informados) e de vegetação por satélite "
-             "(**NDVI MODIS MOD13Q1**, 250 m, composição de 16 dias).")
+    hero("3. Mapa dos talhões",
+         "Visualização dos talhões com indicadores de solo (informados) e de vegetação por satélite "
+         "(**NDVI MODIS MOD13Q1**, 250 m, composição de 16 dias).")
     ndvi = {str(r["nome"]): modis.cached_ndvi(float(r["lat"]), float(r["lon"])) for _, r in ss.talhoes.iterrows()}
     ndvi_last = {k: (float(v["ndvi"].dropna().iloc[-1]) if v is not None and v["ndvi"].notna().any() else np.nan)
                  for k, v in ndvi.items()}
@@ -592,7 +608,7 @@ def render_option(i: int, row: pd.Series, t: Talhao, ref: pd.Series | None) -> N
         c1, c2, c3 = st.columns([1.1, 1.3, 1.3])
         with c1:
             st.plotly_chart(criteria_bar(row), width="stretch", key=f"cb_{i}_{row.name}")
-            st.metric("Margem média (2 anos)", brl(row["margem_media"]) + "/ha",
+            st.metric("💰 Margem média (2 anos)", brl(row["margem_media"]) + "/ha",
                       help="Média nos anos históricos; P10–P90 abaixo.")
             st.caption(esc(f"P10–P90: {brl(row['margem_p10'])} a {brl(row['margem_p90'])} · "
                            f"água: {row['demanda_mm']:.0f} mm (+{row['irrig_mm']:.0f} irrigação)"))
@@ -610,7 +626,8 @@ def render_option(i: int, row: pd.Series, t: Talhao, ref: pd.Series | None) -> N
 
 
 def page_planejamento() -> None:
-    st.title("4. Planejamento de rotação")
+    hero("4. Planejamento de rotação", "Centenas de rotações simuladas no clima histórico real; veja as melhores "
+         "para as suas prioridades e **por que** foram indicadas.")
     t = select_talhao()
     if t is None:
         return
@@ -686,7 +703,8 @@ def strategy_set(t: Talhao, res: pd.DataFrame) -> dict[str, pd.Series]:
 
 
 def page_comparacao() -> None:
-    st.title("5. Comparação de cenários de prioridade")
+    hero("5. Comparação de cenários de prioridade", "Qual rotação vence quando a prioridade muda? Compare "
+         "água, solo, risco e margem lado a lado.")
     t = select_talhao()
     if t is None:
         return
@@ -701,7 +719,7 @@ def page_comparacao() -> None:
         with col.container(border=True):
             st.markdown(f"**{name}**")
             st.write(row["Rotação"])
-            st.metric("Margem média 2 anos", brl(row["margem_media"]))
+            st.metric("💰 Margem média 2 anos", brl(row["margem_media"]))
             st.caption(f"Água {row['demanda_mm'] + row['irrig_mm']:.0f} mm · cobertura {row['cobertura_dias']:.0f} d · "
                        f"quebra {row['p_quebra']:.0f}%")
 
@@ -762,7 +780,8 @@ def set_sim(values: dict) -> None:
 
 
 def page_simulador() -> None:
-    st.title("6. Simulador de cenários climáticos")
+    hero("6. Simulador de cenários climáticos", "Aplique seca, calor, atraso das chuvas e veranicos sobre os "
+         "anos históricos e veja quais rotações resistem melhor.")
     st.info("**Cenário hipotético (análise “e se”)**: as alterações abaixo são aplicadas sobre os anos históricos "
             "da NASA POWER para testar a sensibilidade das rotações. **Não é previsão do tempo** (dias a semanas) "
             "**nem projeção climática** (décadas, modelos CMIP6/NEX-GDDP).")
@@ -940,8 +959,8 @@ def build_report() -> tuple[str, pd.DataFrame]:
 
 
 def page_relatorio() -> None:
-    st.title("7. Relatório")
-    st.write("Resumo das estratégias por talhão, indicadores utilizados e dados necessários para validação em campo.")
+    hero("7. Relatório",
+         "Resumo das estratégias por talhão, indicadores utilizados e dados necessários para validação em campo.")
     if climate()[0] is None:
         return
     report, table = build_report()
