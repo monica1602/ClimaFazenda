@@ -16,6 +16,10 @@ superior esquerdo para abrir o menu das 7 telas.
 > | 5. Comparação de cenários | roxo e verde-água | decisão e equilíbrio entre prioridades |
 > | 6. Simulador climático | laranja e vermelho | calor e seca |
 > | 7. Relatório | azul NASA e vermelho | síntese e documentação |
+>
+> Ao trocar a propriedade demonstrativa, as cores de cada tela mudam para o tom da região (`theme.REGIONS`):
+> Cerrado (terra vermelha, buriti, ipê-amarelo) · Norte do Paraná (terra roxa, café) · Planalto Médio
+> (araucária, trigo, geada) · Médio-Norte (soja dourada, chapadas) · Semiárido (caatinga, rio São Francisco, uva e manga).
 
 Protótipo para o desafio **NASA Space Apps Challenge 2026 — "Mudança no Campo: Adaptando Fazendas com Dados da NASA"**.
 

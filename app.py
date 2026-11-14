@@ -242,16 +242,20 @@ def color_scale(values: dict[str, float], scale: str = "RdYlGn", reverse: bool =
 
 # ----------------------------------------------------------------------------- barra lateral
 
-PALETTE = list(theme.THEMES[ss.page].paleta)
-st.markdown(theme.css(ss.page), unsafe_allow_html=True)
+PALETTE = list(theme.theme_for(ss.page, ss.preset).paleta)
+st.markdown(theme.css(ss.page, ss.preset), unsafe_allow_html=True)
 
 
 def hero(title: str, text: str | None = None) -> None:
     t = theme.THEMES[ss.page]
+    region = theme.REGIONS.get(ss.preset)
+    chip = f'<span class="rc-chip">{t.icone} {esc(t.resumo)}</span>'
+    if region:
+        chip += f'<span class="rc-region" title="Cores inspiradas em: {region.paisagem}">📍 {region.nome}</span>'
     with st.container(key="hero"):
         c1, c2 = st.columns([2.4, 1], vertical_alignment="center")
         with c1:
-            st.markdown(f'<span class="rc-chip">{t.icone} {esc(t.resumo)}</span>', unsafe_allow_html=True)
+            st.markdown(chip, unsafe_allow_html=True)
             st.title(title)
             if text:
                 st.markdown(text)

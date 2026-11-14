@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import base64
-from dataclasses import dataclass
+import colorsys
+from dataclasses import dataclass, replace
 from functools import lru_cache
 from pathlib import Path
 
@@ -53,6 +54,62 @@ THEMES: dict[str, PageTheme] = {
 }
 
 
+@dataclass(frozen=True)
+class Region:
+    nome: str
+    paisagem: str
+    cores: dict[str, tuple[str, str]]
+
+
+def _region(nome: str, paisagem: str, pares: list[tuple[str, str]]) -> Region:
+    return Region(nome, paisagem, dict(zip(THEMES, pares)))
+
+
+REGIONS: dict[str, Region] = {
+    "Rio Verde (GO) — Cerrado": _region("Cerrado", "terra vermelha, buriti e ipê-amarelo", [
+        ("#A0522D", "#C0CA33"), ("#1976D2", "#F9A825"), ("#2E7D5B", "#D4E157"), ("#558B2F", "#F9A825"),
+        ("#6A1B9A", "#FF8F00"), ("#D84315", "#FFCA28"), ("#0B3D91", "#FC3D21")]),
+    "Londrina (PR) — Norte do Paraná": _region("Norte do Paraná", "terra roxa e café", [
+        ("#7B3F3F", "#8BC34A"), ("#3949AB", "#FFB300"), ("#00796B", "#AED581"), ("#2E7D32", "#C62828"),
+        ("#880E4F", "#26A69A"), ("#E65100", "#FFD54F"), ("#283593", "#EF5350")]),
+    "Passo Fundo (RS) — Planalto Médio": _region("Planalto Médio", "araucária, trigo e geada", [
+        ("#5D6D3B", "#BCAAA4"), ("#0277BD", "#80DEEA"), ("#1B5E20", "#A5D6A7"), ("#33691E", "#FFD54F"),
+        ("#4527A0", "#90CAF9"), ("#C62828", "#FFAB91"), ("#263238", "#4FC3F7")]),
+    "Sorriso (MT) — Médio-Norte": _region("Médio-Norte", "soja dourada e chapadas", [
+        ("#8D6E3F", "#9CCC65"), ("#0288D1", "#FFCA28"), ("#00695C", "#FFEE58"), ("#9E9D24", "#FFB300"),
+        ("#512DA8", "#FFB300"), ("#EF6C00", "#FFE082"), ("#01579B", "#FFB300")]),
+    "Petrolina (PE) — Semiárido": _region("Semiárido", "caatinga, rio São Francisco, uva e manga", [
+        ("#B5651D", "#8D9E3A"), ("#00838F", "#FFB74D"), ("#6D8B3A", "#E0C068"), ("#7CB342", "#8E24AA"),
+        ("#7A2E5C", "#FB8C00"), ("#BF360C", "#FFC107"), ("#4E342E", "#FF7043")]),
+}
+
+
+def _hls(hex_color: str) -> tuple[float, float, float]:
+    r, g, b = (int(hex_color[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    return colorsys.rgb_to_hls(r, g, b)
+
+
+def _hex(h: float, l: float, s: float) -> str:
+    return "#" + "".join(f"{round(c * 255):02X}" for c in colorsys.hls_to_rgb(h, l, s))
+
+
+def text_on(hex_color: str) -> str:
+    r, g, b = (int(hex_color[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    return "#1F2A30" if 0.299 * r + 0.587 * g + 0.114 * b > 0.62 else "#FFFFFF"
+
+
+def theme_for(page: str, preset: str | None = None) -> PageTheme:
+    base = THEMES[page]
+    region = REGIONS.get(preset or "")
+    if region is None:
+        return base
+    primaria, destaque = region.cores[page]
+    h, l, s = _hls(primaria)
+    paleta = base.paleta if page.startswith("5.") else (primaria, *[c for c in base.paleta[1:] if c != primaria])
+    return replace(base, primaria=primaria, destaque=destaque, escura=_hex(h, l * 0.55, s),
+                   clara=_hex(h, 0.95, min(s, 0.45)), paleta=paleta)
+
+
 @lru_cache(maxsize=None)
 def svg_uri(name: str) -> str:
     data = (ASSETS / name).read_bytes()
@@ -63,14 +120,14 @@ def nav_label(page: str) -> str:
     return f"{THEMES[page].icone}  {page}"
 
 
-def css(page: str) -> str:
-    t = THEMES[page]
+def css(page: str, preset: str | None = None) -> str:
+    t = theme_for(page, preset)
     nav = "\n".join(
         f'section[data-testid="stSidebar"] [role="radiogroup"] > div:nth-of-type({i}) > label '
         f"{{ border-left: 5px solid {th.primaria}; }}\n"
         f'section[data-testid="stSidebar"] [role="radiogroup"] > div:nth-of-type({i}) > label:has(input:checked) '
         f"{{ background: {th.primaria}; }}"
-        for i, th in enumerate(THEMES.values(), start=1)
+        for i, th in enumerate((theme_for(p, preset) for p in THEMES), start=1)
     )
     return f"""
 <style>
@@ -85,9 +142,11 @@ section[data-testid="stSidebar"] [role="radiogroup"] > div > label:has(input:che
 .rc-brand b {{ font-size: 1.45rem; color: {t.escura}; }}
 .st-key-hero {{ background: linear-gradient(120deg, {t.primaria} 0%, {t.escura} 100%); border-radius: 18px;
   padding: 1.1rem 1.6rem; box-shadow: 0 8px 22px rgba(0,0,0,.14); }}
-.st-key-hero h1, .st-key-hero p, .st-key-hero span {{ color: #FFFFFF !important; }}
+.st-key-hero h1, .st-key-hero p {{ color: #FFFFFF !important; }}
+.st-key-hero .rc-region {{ display: inline-block; margin-left: 6px; border: 1.5px solid rgba(255,255,255,.8);
+  color: #FFFFFF; border-radius: 999px; padding: 1px 10px; font-size: .8rem; }}
 .st-key-hero h1 {{ padding-bottom: .2rem; }}
-.st-key-hero .rc-chip {{ display: inline-block; background: {t.destaque}; color: #FFFFFF; border-radius: 999px;
+.st-key-hero .rc-chip {{ display: inline-block; background: {t.destaque}; color: {text_on(t.destaque)} !important; border-radius: 999px;
   padding: 2px 12px; font-size: .8rem; font-weight: 700; letter-spacing: .03em; }}
 .st-key-hero img {{ width: 100%; max-height: 170px; filter: drop-shadow(0 4px 8px rgba(0,0,0,.25)); }}
 h2, h3 {{ color: {t.escura}; }}
